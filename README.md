@@ -377,6 +377,7 @@ Full-Stack-Application/
 ---
 
 ### Step 2: Backend Setup
+The backend is a Node.js/Express.js application that interacts with a PostgreSQL database. To prepare it for deployment, install the required dependencies by navigating to the backend/ directory and running:
 ```bash
 cd backend
 npm install
@@ -392,12 +393,14 @@ make push
 ---
 
 ### Step 3: Frontend Setup
+Similar to the backend, the frontend includes a Dockerfile for containerization, optimized with a multi-stage build and Nginx for serving static assets. Follow the same steps as the backend:
 ```bash
 cd frontend
 npm install
 ```
 
-Same process as backend:  
+Same process as backend:
+The repository likely includes a Makefile or configuration file that references a Docker Hub username (e.g., USERNAME ?= your docker username). Before building the image, update this username to your own Docker Hub username. If using a Makefile, locate the line:
 ```bash
 docker login
 make build
