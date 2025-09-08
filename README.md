@@ -329,10 +329,49 @@ git clone https://github.com/faizulkhan56/Full-Stack-Application
 ### Project Structure
 ```plaintext
 Full-Stack-Application/
-├── frontend/                    # React TypeScript app
+├── frontend/                    # React TypeScript application
+│   ├── public/                  # Static assets
+│   ├── src/
+│   │   ├── components/          # React components
+│   │   │   ├── Login.tsx        # User login component
+│   │   │   ├── Register.tsx     # User registration component
+│   │   │   └── Dashboard.tsx    # Main dashboard with user management
+│   │   ├── services/            # API services
+│   │   │   ├── api.ts           # Axios configuration with interceptors
+│   │   │   └── userService.ts   # User-related API calls
+│   │   ├── App.tsx              # Main application component
+│   │   └── index.tsx            # Application entry point
+│   ├── Dockerfile               # Multi-stage Docker build
+│   ├── nginx.conf               # Nginx configuration for production
+│
 ├── backend/                     # Node.js Express API
-├── DB/                          # PostgreSQL schema + seed
+│   ├── src/
+│   │   ├── config/
+│   │   │   └── database.js      # PostgreSQL connection configuration
+│   │   ├── controllers/
+│   │   │   └── userController.js # User business logic
+│   │   ├── middleware/
+│   │   │   └── authMiddleware.js # JWT authentication middleware
+│   │   ├── models/
+│   │   │   └── userModel.js     # User data access layer
+│   │   ├── routes/
+│   │   │   └── userRoutes.js    # API route definitions
+│   │   └── server.js            # Express server setup
+│   ├── Dockerfile               # Production-ready container image
+│   ├── endpoint.http            # API testing endpoints
+│
+├── DB/                          # Database configuration
+│   ├── init/
+│   │   └── 01_init.sql          # Database schema and seed data
+│
 ├── k8s/                         # Kubernetes manifests
+│   ├── namespace.yaml           # Namespace and RBAC
+│   ├── postgres.yaml            # PostgreSQL deployment
+│   ├── postgres-init.yaml       # Database initialization ConfigMap
+│   ├── backend.yaml             # Backend API deployment
+│   ├── frontend.yaml            # Frontend deployment with NodePort
+│   ├── ingress.yaml             # Traefik ingress configuration
+
 ```
 
 ---
