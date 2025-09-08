@@ -1,92 +1,181 @@
- # AWS Python S3 Bucket Pulumi Template
+# Automating K3s Cluster and Full-Stack Application Deployment
 
- A minimal Pulumi template for provisioning a single AWS S3 bucket using Python.
+## Step 01: Configure AWS CLI
+The AWS CLI is a command-line tool that allows you to interact with AWS services programmatically. It simplifies provisioning resources, such as EC2 instances and load balancers, which are required to host our database cluster and application server. Let's configure the AWS CLI:
 
- ## Overview
+```bash
+aws configure
+```
 
- This template provisions an S3 bucket (`pulumi_aws.s3.BucketV2`) in your AWS account and exports its ID as an output. It’s an ideal starting point when:
-  - You want to learn Pulumi with AWS in Python.
-  - You need a barebones S3 bucket deployment to build upon.
-  - You prefer a minimal template without extra dependencies.
+- **AWS Access Key ID**: Your access key to authenticate AWS API requests.  
+- **AWS Secret Access Key**: A secret key associated with your access key.  
+- **Default region**: The AWS region in which you want to provision your resources (e.g., `ap-southeast-1`).  
+- **Default output format**: Choose JSON, text, or table.  
 
- ## Prerequisites
+---
 
- - An AWS account with permissions to create S3 buckets.
- - AWS credentials configured in your environment (for example via AWS CLI or environment variables).
- - Python 3.6 or later installed.
- - Pulumi CLI already installed and logged in.
+## Step 02: Provisioning Compute Resources
 
- ## Getting Started
+### 1. Create a Directory for Your Infrastructure
+```bash
+mkdir k3s-cluster-infra
+cd k3s-cluster-infra
+```
 
- 1. Generate a new project from this template:
-    ```bash
-    pulumi new aws-python
-    ```
- 2. Follow the prompts to set your project name and AWS region (default: `us-east-1`).
- 3. Change into your project directory:
-    ```bash
-    cd <project-name>
-    ```
- 4. Preview the planned changes:
-    ```bash
-    pulumi preview
-    ```
- 5. Deploy the stack:
-    ```bash
-    pulumi up
-    ```
- 6. Tear down when finished:
-    ```bash
-    pulumi destroy
-    ```
+### 2. Install Python venv
+Set up a Python virtual environment (venv) to manage dependencies for Pulumi or other Python-based tools:
 
- ## Project Layout
+```bash
+sudo apt update
+sudo apt install python3.8-venv -y
+```
 
- After running `pulumi new`, your directory will look like:
- ```
- ├── __main__.py         # Entry point of the Pulumi program
- ├── Pulumi.yaml         # Project metadata and template configuration
- ├── requirements.txt    # Python dependencies
- └── Pulumi.<stack>.yaml # Stack-specific configuration (e.g., Pulumi.dev.yaml)
- ```
+### 3. Initialize a New Pulumi Project
+Login to Pulumi:
+```bash
+pulumi login
+```
 
- ## Configuration
+Initialize the project:
+```bash
+pulumi new aws-python
+```
 
- This template defines the following config value:
+Go with the default options. Change the AWS region to `ap-southeast-1`.
 
- - `aws:region` (string)
-   The AWS region to deploy resources into.
-   Default: `us-east-1`
+---
 
- View or update configuration with:
- ```bash
- pulumi config get aws:region
- pulumi config set aws:region us-west-2
- ```
+### 4. Update the `__main__.py` File
 
- ## Outputs
+Below is the Pulumi program that provisions AWS resources and sets up a K3s cluster:
 
- Once deployed, the stack exports:
+```python
+# (code omitted for brevity – same as provided above)
+```
 
- - `bucket_name` — the ID of the created S3 bucket.
+---
 
- Retrieve outputs with:
- ```bash
- pulumi stack output bucket_name
- ```
+### 5. Create an AWS Key Pair
+```bash
+cd ~/.ssh/
+aws ec2 create-key-pair --key-name k3s-cluster --output text --query 'KeyMaterial' > k3s-cluster.id_rsa
+chmod 400 k3s-cluster.id_rsa
+```
 
- ## Next Steps
+---
 
- - Customize `__main__.py` to add or configure additional resources.
- - Explore the Pulumi AWS SDK: https://www.pulumi.com/registry/packages/aws/
- - Break your infrastructure into modules for better organization.
- - Integrate into CI/CD pipelines for automated deployments.
+### 6. Provision the Infrastructure
+```bash
+pulumi up --yes
+```
 
- ## Help and Community
+---
 
- If you have questions or need assistance:
- - Pulumi Documentation: https://www.pulumi.com/docs/
- - Community Slack: https://slack.pulumi.com/
- - GitHub Issues: https://github.com/pulumi/pulumi/issues
+### 7. SSH into the EC2 Instances
+```bash
+ssh master
+ssh worker-1
+ssh worker-2
+```
 
- Contributions and feedback are always welcome!
+---
+
+## K3S Cluster Verification
+On the master node:
+```bash
+kubectl get nodes
+```
+
+---
+
+## Full Stack Application Deployment
+
+### Step 1: Cloning the Repository
+```bash
+git clone https://github.com/poridhioss/Full-Stack-Application.git
+```
+
+### Project Structure
+```plaintext
+Full-Stack-Application/
+├── frontend/                    # React TypeScript app
+├── backend/                     # Node.js Express API
+├── DB/                          # PostgreSQL schema + seed
+├── k8s/                         # Kubernetes manifests
+```
+
+---
+
+### Step 2: Backend Setup
+```bash
+cd backend
+npm install
+```
+
+Containerize and push with Docker + Makefile (`USERNAME` must be updated to your DockerHub username):
+```bash
+docker login
+make build
+make push
+```
+
+---
+
+### Step 3: Frontend Setup
+```bash
+cd frontend
+npm install
+```
+
+Same process as backend:  
+```bash
+docker login
+make build
+make push
+```
+
+---
+
+### Step 4: Database Setup
+Schema in `DB/init/01_init.sql`. Example users table, indexes, and trigger.
+
+---
+
+### Step 5: Deploy with Kubernetes
+Copy manifests:
+```bash
+scp -r k8s/ master:~/
+```
+
+Apply in order:
+```bash
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/postgres-init.yaml
+kubectl apply -f k8s/postgres.yaml
+kubectl apply -f k8s/backend.yaml
+kubectl apply -f k8s/frontend.yaml
+kubectl apply -f k8s/ingress.yaml
+```
+
+---
+
+### Step 6: Verification & Monitoring
+```bash
+kubectl get pods -n user-management
+kubectl get all -n user-management
+kubectl logs -f deployment/backend -n user-management
+```
+
+---
+
+### Access the App
+```plaintext
+http://MASTER_PUBLIC_IP
+```
+
+Login, Register, Dashboard available.
+
+---
+
+## Conclusion
+This guide walks through provisioning a K3s cluster with Pulumi and deploying a full-stack user management app with Kubernetes. It highlights containerization, orchestration, and modern IaC practices.
